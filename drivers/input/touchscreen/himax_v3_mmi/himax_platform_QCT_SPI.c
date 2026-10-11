@@ -1050,6 +1050,7 @@ int himax_chip_common_probe(struct spi_device *spi)
 	struct himax_ts_data *ts;
 	int ret = 0;
 	struct device_node *dp;
+	static int deferred_twice = 0;
 
 	I("Enter %s\n", __func__);
 	if (spi->master->flags & SPI_MASTER_HALF_DUPLEX) {
@@ -1060,6 +1061,11 @@ int himax_chip_common_probe(struct spi_device *spi)
 #ifdef CONFIG_DRM
 	dp = spi->dev.of_node;
 	if (check_dt(dp)) {
+		E("Not available yet, deferring probe.")
+		/* If the panel is not ready, defer the probe and let the kernel retry later. */
+        deferred_twice++;
+		return -EPROBE_DEFER;
+	} else if (deferred_twice >= 2) {	
 		return -ENODEV;
 	}
 #endif
